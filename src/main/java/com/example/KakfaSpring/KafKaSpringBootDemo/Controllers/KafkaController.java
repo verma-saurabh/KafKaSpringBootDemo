@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.websocket.server.PathParam;
 import java.util.Properties;
 
 @RestController()
@@ -14,7 +15,7 @@ public class KafkaController {
     private static Logger logger = LoggerFactory.getLogger(KafkaController.class);
 
     @PostMapping(value = "/produce")
-    public String produce(String topic, String value) {
+    public String produce(@PathParam(value = "topic") String topic, @PathParam(value = "value") String value) {
         Properties prop = new Properties();
         prop.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
         prop.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
