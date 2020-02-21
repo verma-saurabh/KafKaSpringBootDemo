@@ -1,15 +1,23 @@
 package com.example.KakfaSpring.KafKaSpringBootDemo.Controllers;
 
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
+import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.internals.Topic;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaProducerException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import javax.websocket.server.PathParam;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -23,8 +31,14 @@ public class KafkaProducerController {
     @PostMapping(value = "/produce")
     public String produce(@PathParam(value = "topic") String topic, @PathParam(value = "value") String value) {
 
-        kafkaTemplate.send(topic, value);
-        kafkaTemplate.flush();
+        try {
+            kafkaTemplate.send(topic, value);
+            kafkaTemplate.flush();
+        } catch (Exception e) {
+            logger.error("An Exception occured " + e.toString());
+            return e.toString();
+        }
+
         return "Data produced";
     }
 
@@ -42,9 +56,9 @@ public class KafkaProducerController {
         ProducerRecord<String, String> prodrRecord =
                 new ProducerRecord<String, String>(topic, value);
         //send data
+        /*kafkaTemplate.send(topic, value);
         kafkaTemplate.send(topic, value);
-        kafkaTemplate.send(topic, value);
-        kafkaTemplate.flush();
+        kafkaTemplate.flush();*/
         producer.send(prodrRecord, new Callback() {
             public void onCompletion(RecordMetadata recordMetadata, Exception e) {
                 if (e == null) {
