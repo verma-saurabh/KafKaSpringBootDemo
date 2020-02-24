@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,8 @@ import java.util.concurrent.CountDownLatch;
 @RestController
 public class KafkaConsumerController {
 
-
+    @Autowired
+    private ConsumerFactory consumerFactory;
     private String offsetResetConfig = "earliest";
     Logger logger = LoggerFactory.getLogger(KafkaConsumerController.class);
 
@@ -57,7 +59,47 @@ public class KafkaConsumerController {
 
         return "";
     }
+
+    @PostMapping(value = "/consumerUsingAssignAndSeek")
+    public String consumerUsingAssignAndSeek(
+            @PathParam(value = "topic") String topic, @PathParam(value = "groupId") String groupId) {
+        KafkaConsumer<String, String> consumer =
+                new KafkaConsumer<String, String>(consumerFactory.getConfigurationProperties());
+
+        //assign and seek are mostly used to replay the data or fetch a specific message
+
+        //assign
+
+        TopicPartition topicToReadFrom = new TopicPartition(topic, 0);
+        consumer.assign(Arrays.asList(topicToReadFrom));
+        long offsetToReadFrom = 15L;
+        consumer.seek(topicToReadFrom, offsetToReadFrom);
+
+        int numberOfMsgToRead = 5;
+        boolean keepOnReading = true;
+        int countOfMsgsRead = 0;
+        //poll for new data
+        while (keepOnReading) {
+            ConsumerRecords<String, String> consumerRecord = consumer.poll(Duration.ofMillis(100));
+            for (ConsumerRecord record : consumerRecord) {
+                countOfMsgsRead += 1;
+                String msg = "key=" + record.key() + "\n" +
+                        "value=>" + record.value() + "\n" +
+                        "Partition=>" + record.partition() + "\n" +
+                        "offset=>" + record.offset();
+
+                logger.info(msg);
+                if (countOfMsgsRead >= numberOfMsgToRead) {
+                    keepOnReading = false;//exit the while loop
+                    break;
+                }
+
+            }
+        }
+        return "";
+    }
 }
+
 
 class ConsumerThread implements Runnable {
 
