@@ -19,7 +19,7 @@ public class KafkaConsumerConfig {
     @Value(value = "${kafka.bootstrapAddress}")
     private String bootstrapAddress;
     private String groupId;
-    private String offsetResetConfig;
+    private String offsetResetConfig = "";
 
     @Bean
     public Map<String, Object> consumerConfigs() {
